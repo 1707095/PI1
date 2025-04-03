@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Usuários - Salão de Agendamentos</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f9;
+        margin: 0;
+        padding: 0;
+      }
+      header {
+        background-color: #4caf50;
+        color: white;
+        padding: 10px 20px;
+        text-align: center;
+      }
+      main {
+        margin: 20px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      th,
+      td {
+        padding: 10px;
+        text-align: left;
+        border: 1px solid #ddd;
+      }
+      th {
+        background-color: #4caf50;
+        color: white;
+      }
+      input,
+      button {
+        padding: 10px;
+        margin: 5px;
+      }
+      button {
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Usuários - Salão de Agendamentos</h1>
+    </header>
+
+    <main>
+      <h2>Gerenciar Usuários</h2>
+
+      <!-- Campo de Pesquisa -->
+      <input type="text" id="searchUser" placeholder="Pesquisar por nome" />
+      <button onclick="searchUsuarios()">Buscar</button>
+      <button onclick="getUsuarios()">Listar Todos os Usuários</button>
+      <!-- NOVO BOTÃO -->
+
+      <!-- Formulário para Adicionar Usuário -->
+      <h3>Adicionar Usuário</h3>
+      <input type="text" id="username" placeholder="Nome" />
+      <input type="email" id="email" placeholder="E-mail" />
+      <select id="tipo">
+        <option value="cliente">Cliente</option>
+        <option value="profissional">Profissional</option>
+        <option value="administrador">Administrador</option>
+      </select>
+      <input type="text" id="telefone" placeholder="Telefone" />
+      <button onclick="addUsuario()">Adicionar</button>
+
+      <!-- Tabela de Usuários -->
+      <table id="usuarios-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nome</th>
+            <th>Email</th>
+            <th>Tipo</th>
+            <th>Telefone</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="usuarios-list"></tbody>
+      </table>
+    </main>
+
+    <script>
+        const apiUrl = 'http://127.0.0.1:8000/usuarios/usuarios/';
+
+        // Função para buscar todos os usuários
+        async function getUsuarios() {
+          try {
+              const response = await fetch(apiUrl);
+              if (!response.ok) {
+                  throw new Error(`Erro na requisição: ${response.status} - ${response.statusText}`);
+              }
+              const data = await response.json();
+              console.log("Usuários recebidos:", data); // Debug
+              renderUsuarios(data);
+          } catch (error) {
+              console.error('Erro ao buscar usuários:', error);
+              alert("Erro ao carregar usuários. Verifique a API.");
+            }
+          }
+          
+        // Função para renderizar a lista de usuários na tabela
+        function renderUsuarios(usuarios) {
+          const tableBody = document.getElementById('usuarios-list');
+          
+          // Limpa a tabela antes de adicionar os novos resultados
+          tableBody.innerHTML = '';
+      
+          // Verifica se há usuários
+          if (usuarios.length === 0) {
+              tableBody.innerHTML = '<tr><td colspan="6">Nenhum usuário encontrado.</td></tr>';
+              return;
+          }
+      
+          // Adiciona os usuários à tabela
+          usuarios.forEach((usuario) => {
+              const row = document.createElement('tr');
+              row.innerHTML = `
+                  <td>${usuario.id}</td>
+                  <td>${usuario.username}</td>
+                  <td>${usuario.email}</td>
+                  <td>${usuario.tipo}</td>
+                  <td>${usuario.telefone || 'N/A'}</td>
+                  <td>
+                      <button onclick="deleteUsuario(${usuario.id})">Excluir</button>
+                  </td>
+              `;
+              tableBody.appendChild(row);
+          });
+      }
+
+        // Função para adicionar um usuário
+        async function addUsuario() {
+            const username = document.getElementById('username').value;
+            const email = document.getElementById('email').value;
+            const tipo = document.getElementById('tipo').value;
+            const telefone = document.getElementById('telefone').value;
+
+            const userData = { username, email, tipo, telefone };
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+
+                if (response.ok) {
+                    alert('Usuário adicionado com sucesso!');
+                    getUsuarios(); // Atualiza a lista
+                } else {
+                    alert('Erro ao adicionar usuário.');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+            }
+        }
+
+        // Função para deletar um usuário
+        async function deleteUsuario(userId) {
+            if (confirm('Tem certeza que deseja excluir este usuário?')) {
+                try {
+                    const response = await fetch(`${apiUrl}${userId}/`, { method: 'DELETE' });
+
+                    if (response.ok) {
+                        alert('Usuário excluído com sucesso!');
+                        getUsuarios(); // Atualiza a lista
+                    } else {
+                        alert('Erro ao excluir usuário.');
+                    }
+                } catch (error) {
+                    console.error('Erro:', error);
+                }
+            }
+        }
+
+        // Função para pesquisar usuários por nome
+        async function searchUsuarios() {
+          const query = document.getElementById('searchUser').value.trim();
+          if (!query) {
+              getUsuarios(); // Se o campo estiver vazio, retorna todos os usuários
+              return;
+          }
+          //http://127.0.0.1:8000/usuarios/usuarios/?search=Teste3
+          try {
+
+              const response = await fetch(`${apiUrl}?search=${query}&format=json`);
+              if (!response.ok) {
+                  throw new Error(`Erro na requisição: ${response.status} - ${response.statusText}`);
+              }
+              const data = await response.json();
+              console.log("Json Retornado: " + data);
+              // Verifica se a API retornou uma estrutura com "results"
+              const usuarios = data.results ? data.results : data;
+
+              if (!Array.isArray(usuarios)) {
+                  throw new Error("Resposta da API não contém uma lista de usuários.");
+              }
+      
+              renderUsuarios(usuarios);
+          } catch (error) {
+              console.error('Erro ao buscar usuários:', error);
+              alert('Erro ao buscar usuários. Verifique a API.');
+          }
+      }
+
+        // Carregar usuários ao abrir a página
+        window.onload = getUsuarios();
+    </script>
+  </body>
+</html>

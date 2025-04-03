@@ -1,18 +1,12 @@
-import datetime
-from django.http import HttpResponse
-from django.shortcuts import render
-
-# Create your views here.
 from rest_framework import viewsets
+from rest_framework.filters import SearchFilter  # Importando corretamente o filtro
 from .models import Usuario
 from .serializers import UsuarioSerializer
+from rest_framework.permissions import AllowAny
 
 class UsuarioViewSet(viewsets.ModelViewSet):
     queryset = Usuario.objects.all()
     serializer_class = UsuarioSerializer
-
-
-def current_datetime(request):
-    now = datetime.datetime.now()
-    html = '<html lang="en"><body>It is now %s.</body></html>' % now
-    return HttpResponse(html)
+    permission_classes = [AllowAny]
+    filter_backends = [SearchFilter]  # Aqui está o erro corrigido
+    search_fields = ['username']  # Permite buscar pelo nome do usuário
