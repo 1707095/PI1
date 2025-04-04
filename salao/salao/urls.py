@@ -1,12 +1,13 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from agendamentos import views
+from agendamentos import admin, views
 
 
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path
 from django.views.generic import TemplateView
+from django.contrib import admin
 
 router = DefaultRouter()
 router.register(r'usuarios', views.UsuarioViewSet)  # Cria as rotas automaticamente
@@ -15,6 +16,7 @@ router.register(r'usuarios', views.UsuarioViewSet)  # Cria as rotas automaticame
 urlpatterns = [
     path('usuarios/', include(router.urls)),  # Inclui todas as rotas do DRF
     path('', TemplateView.as_view(template_name='index.html'), name='index'),
+    path("admin/", admin.site.urls),
 ]
 
 
